@@ -1,21 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LogOut, CreditCard, TrendingUp, Eye, EyeOff, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { user, auth } from '../lib/api';
-
-interface Account {
-  id: number;
-  account_number: string;
-  balance: number;
-  account_type: string;
-}
-
-interface Transaction {
-  id: number;
-  description: string;
-  amount: number;
-  type: 'debit' | 'credit';
-  created_at: string;
-}
+import type { Account, Transaction } from '../lib/supabase';
 
 interface DashboardProps {
   onSignOut: () => void;
@@ -48,14 +34,14 @@ export default function Dashboard({ onSignOut }: DashboardProps) {
 
       setLoading(false);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors du chargement');
+      setError(err.message || 'Erreur lors du chargement');
       setLoading(false);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      auth.logout();
+      await auth.logout();
       onSignOut();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de déconnexion');
@@ -70,7 +56,7 @@ export default function Dashboard({ onSignOut }: DashboardProps) {
     );
   }
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+  const totalBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -135,7 +121,7 @@ export default function Dashboard({ onSignOut }: DashboardProps) {
               </div>
               <p className="text-slate-600 text-sm mb-3">{account.account_number}</p>
               <p className="text-slate-900 text-2xl font-bold">
-                {showBalance ? `${account.balance.toFixed(2)}€` : '••••••'}
+                {showBalance ? `${Number(account.balance).toFixed(2)}€` : '••••••'}
               </p>
             </div>
           ))}
@@ -178,7 +164,7 @@ export default function Dashboard({ onSignOut }: DashboardProps) {
                       <td className={`px-6 py-4 text-sm font-semibold ${
                         transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {transaction.type === 'credit' ? '+' : '-'}{transaction.amount.toFixed(2)}€
+                        {transaction.type === 'credit' ? '+' : '-'}{Number(transaction.amount).toFixed(2)}€
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">
                         {new Date(transaction.created_at).toLocaleDateString('fr-FR')}

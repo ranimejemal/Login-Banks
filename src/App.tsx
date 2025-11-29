@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from './lib/supabase';
 import SignIn from './pages/SignIn';
 import Dashboard from './pages/Dashboard';
 
@@ -7,9 +8,18 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-    setLoading(false);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      (async () => {
+        setIsAuthenticated(!!session);
+      })();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (loading) {
